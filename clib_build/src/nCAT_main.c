@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <pthread.h>
+#include <omp.h>
 #include "ct_nurbs.h"
 #define MATERIAL_INDEX_BASIS 0  //can be 1 or zero
 
@@ -5598,8 +5599,6 @@ DLLEXPORT void set_tolerance_info_NCAT(double t1, double t2, double pd)
 DLLEXPORT void set_material_info_NCAT(int materialCount, int eBinCount, double *muTable)  //JDP
 
 {
-  int i, j;
-
   n_energies = eBinCount;
   n_materials = materialCount;
   if (n_materials > MAXIMUM_NUMBER_OF_MATERIALS)
@@ -5607,10 +5606,11 @@ DLLEXPORT void set_material_info_NCAT(int materialCount, int eBinCount, double *
       dbug(-1," !!! Attempt to use too many materials with nurb projector !!!    exiting...\n");
       exit(1);
     }
-  for(i = 0; i < n_energies; i++)
+#pragma omp parallel for
+  for(int i = 0; i < n_energies; i++)
     {
     //For each energy there are mu's for each material
-    for(j = 0; j < n_materials; j++)
+    for(int j = 0; j < n_materials; j++)
       mu_table[j][i] = muTable[j+n_materials*i];
     }
 }
@@ -5618,16 +5618,15 @@ DLLEXPORT void set_material_info_NCAT(int materialCount, int eBinCount, double *
 DLLEXPORT void set_material_info_polygon(int materialCount, int eBinCount, double *muTable)  //JDP
 
 {
-  int i, j;
-
   if (mu_table_tri != NULL)
     free_matrix(mu_table_tri,0,n_materials,0,n_energies);
   n_energies = eBinCount;
   n_materials = materialCount;
   mu_table_tri = matrix(0,n_materials,0,n_energies);
-  for(i = 0; i < n_energies; i++)
+#pragma omp parallel for
+  for(int i = 0; i < n_energies; i++)
     {
-    for(j = 0; j < n_materials; j++)
+    for(int j = 0; j < n_materials; j++)
       mu_table_tri[j][i] = muTable[j+n_materials*i];
     }
 }
@@ -5977,7 +5976,7 @@ void intersections_NCAT(double *detCenter, double *right, double *up, double *sa
 DLLEXPORT void ncat_projector(double subviewWeight, double *thisView, float *sourcePoints, int nSubSources, double *srcHullPoints, int nSrcHullPoints, int *firstDetIndex, int nModulesIn, int *modTypeInds, double *Up, double *Right, double *Center, int UNUSED_tvLength)
 
 {
-  int i, moduleNumber, k, nSubDets, detIndex;
+  int moduleNumber, nSubDets;
   double *detWeights, *UV, *sampling, detCenter[3], *center, *right, *up;
   int moduleTypeIndex;
   
@@ -5994,7 +5993,8 @@ DLLEXPORT void ncat_projector(double subviewWeight, double *thisView, float *sou
       up = &Up[3*moduleNumber];
 
       dbug(3,"Number of pixels in this module: %d    \r\nmoduleTypeIndex : %d\n\r",modules_NCAT.Pix[moduleTypeIndex],moduleTypeIndex);
-      for(k = 0;k<modules_NCAT.Pix[moduleTypeIndex];k++){
+#pragma omp parallel for
+      for(int k = 0;k<modules_NCAT.Pix[moduleTypeIndex];k++){
 
         //        if ((d_flag)&&((k==64+11)||(k==64+11))) debug_flag = 4; else debug_flag = 0;
 
@@ -6003,8 +6003,9 @@ DLLEXPORT void ncat_projector(double subviewWeight, double *thisView, float *sou
 	//if (k==74) debug_flag = 0;
 	//if (k==345) exit(1);
         // Compute pixel center locations
-        detIndex = firstDetIndex[moduleNumber]+k;
-        for(i = 0;i<3;i++)
+        int detIndex = firstDetIndex[moduleNumber]+k;
+        double detCenter[3];
+        for(int i = 0;i<3;i++)
           detCenter[i] = center[i] + UV[k*2]*right[i] + UV[k*2+1]*up[i];
         // Compute relative intensities
         intersections_NCAT(detCenter, right, up, sampling, nSubDets, sourcePoints, thisView, detIndex, subviewWeight, detWeights);
