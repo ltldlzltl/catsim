@@ -10,6 +10,9 @@ examples/*.scan
 examples/*.prep
 examples/*.recon
 
+# build files
+build
+
 # Distribution / packaging
 .Python
 pip-wheel-metadata/

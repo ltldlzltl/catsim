@@ -4,6 +4,7 @@
 #include <stdlib.h> // malloc(), free()
 #include <stdio.h>
 #include <string.h>
+#include <omp.h>
 
 #include "DD3_roi_notrans_mm.hpp"
 
@@ -216,10 +217,10 @@ void DD3ProjView_roi_notrans_mm(float x0,
 							 byte* xy_mask_trans)    //transposed mask
 
 {
-	float *detXcopy, *pImg, *viewCopy, *detZcopy, *scalesCopy;
+	float *detXcopy, *viewCopy, *detZcopy, *scalesCopy;
 	int xdistnr, nrxdist;
 	int dummyint, increment, rownr, detcolnr, detrownr;
-	float dummyfloat, imgX, imgXstep, imgZ, imgZstep, invCos;
+	float dummyfloat, invCos;
 	float deltaX, deltaZ, detXstep, detZstep;
 
 	int num_trans_plane_step=1,num_trans_rowstep=1;//to compensate for the removal of pTrans
@@ -242,7 +243,6 @@ void DD3ProjView_roi_notrans_mm(float x0,
 			ydi++;        
 			xdi++;
 		}
-		pImg=pOrig;
 		num_trans_plane_step=nrcols*nrplanes; //for transpose
 		num_trans_rowstep=1;
 		p_mask=xy_mask;
@@ -258,7 +258,6 @@ void DD3ProjView_roi_notrans_mm(float x0,
 			xdi++; 
 			ydi++;
 		}
-		pImg=pOrig;//pImg=pTrans;
 		num_trans_plane_step=nrplanes;
 		num_trans_rowstep=nrcols;
 		p_mask=xy_mask_trans;
@@ -303,22 +302,24 @@ void DD3ProjView_roi_notrans_mm(float x0,
 	/*
 	* For all rows
 	*/
-	for (rownr=0 ; rownr <nrrows ; rownr++)
+#pragma omp parallel for
+	for (int rownr=0 ; rownr <nrrows ; rownr++)
 	{
+		float* pImg = pOrig + rownr * num_trans_plane_step;
 		/*
 		* Initialize image X parameters
 		*/
 		float mag_fac=y0/(y0-((nrrows-1)*0.5-rownr)*vox_xy_size);
-		imgXstep=mag_fac*vox_xy_size;
+		float imgXstep=mag_fac*vox_xy_size;
 		//imgX=x0-(nrcols*0.5*vox_xy_size+x0)*mag_fac; //!! the row direction is opposite to y direction
-                imgX=-x0/(y0-((nrrows-1)*0.5-rownr)*vox_xy_size) * ((nrrows-1)*0.5-rownr)*vox_xy_size-(nrcols*0.5*vox_xy_size)*mag_fac;
+        float imgX=-x0/(y0-((nrrows-1)*0.5-rownr)*vox_xy_size) * ((nrrows-1)*0.5-rownr)*vox_xy_size-(nrcols*0.5*vox_xy_size)*mag_fac;
 
 		/*
 		* Initialize image Z parameters
 		*     (this is the only place were dzdx comes into play)
 		*/
-		imgZstep=mag_fac*vox_z_size;
-		imgZ=z0-(nrplanes*0.5*vox_z_size+z0)*mag_fac;
+		float imgZstep=mag_fac*vox_z_size;
+		float imgZ=z0-(nrplanes*0.5*vox_z_size+z0)*mag_fac;
 
 
 		/*
@@ -330,7 +331,7 @@ void DD3ProjView_roi_notrans_mm(float x0,
 			z0, viewCopy, nrdetrows,nrdetcols,num_trans_rowstep,p_mask+rownr*nrcols);
 
 		//pImg += nrcols*nrplanes; //original code
-		pImg+=num_trans_plane_step;
+		// pImg+=num_trans_plane_step;
 	}
 
 	/*

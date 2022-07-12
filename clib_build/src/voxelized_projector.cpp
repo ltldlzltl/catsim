@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <stdarg.h>
+#include <omp.h>
 #ifndef WIN32
 #include <pthread.h>
 #include <unistd.h>
@@ -491,8 +492,6 @@ void voxelized_projector(
   float *xds = NULL, *yds = NULL, *zds = NULL, x0 = 0, y0 = 0, z0 = 0, totalWt = 0, viewangle;
   int nrdetcols, nrdetrows;
 
-  int EnergyBin;
-
   *Status = 0; 
 
   #if defined(DEBUG_00)
@@ -539,8 +538,9 @@ void voxelized_projector(
   Report(sprintf(OutputString, "thisView[center=%d] = %f\n", nrdetcols*nrdetrows/2,thisView[nrdetcols*nrdetrows/2]));
   #endif
 
+#pragma omp parallel for
   for(int detIndex=0; detIndex<nrdetcols*nrdetrows; detIndex++)
-    for (EnergyBin = 0; EnergyBin < materials.eBinCount; EnergyBin++)
+    for (int EnergyBin = 0; EnergyBin < materials.eBinCount; EnergyBin++)
     {
     thisView[detIndex*materials.eBinCount + EnergyBin] = thisViewProj[detIndex]*materials.muTable[EnergyBin * materials.materialCount + (MaterialIndex-1)];
     #if defined(DEBUG_20)
