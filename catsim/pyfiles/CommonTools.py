@@ -169,7 +169,7 @@ class PathHelper:
                 with open(filename, "r") as f:
                     init = json.load(f)
             except BaseException as err:
-                print(f"***WARNING: Unable to read file: {filename} as json: {err=}, {type(err)=}")
+                print(f"***WARNING: Unable to read file: {filename} as json: {err}, {type(err)}")
             else:
                 if "search_paths" in init:
                     for p in init["search_paths"]:
