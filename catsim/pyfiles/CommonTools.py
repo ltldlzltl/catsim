@@ -321,8 +321,8 @@ def get_vector_boundaries(x):
 def rawread(fname, dataShape, dataType):
     # dataType is for numpy, ONLY allows: 'float'/'single', 'double', 'int'/'int32', 'uint'/'uint32', 'int8', 'int16' 
     #          they are single, double, int32, uin32, int8, int16
-    with open(fname, 'rb') as fin:
-        data = fin.read()
+    # with open(fname, 'rb') as fin:
+    #     data = fin.read()
     
     # https://docs.python.org/3/library/struct.html
     switcher = {'float': ['f', 4, np.single], 
@@ -335,13 +335,15 @@ def rawread(fname, dataShape, dataType):
                 'int8': ['b', 1, np.int8], 
                 'int16': ['h', 2, np.int16]}
     fmt = switcher[dataType]
-    data = struct.unpack("%d%s" % (len(data)/fmt[1], fmt[0]), data)
+    # data = struct.unpack("%d%s" % (len(data)/fmt[1], fmt[0]), data)
     
-    data = np.array(data, dtype=fmt[2])
+    # data = np.array(data, dtype=fmt[2])
+    data = np.fromfile(fname, dtype=fmt[2])
     if dataShape:
         data = data.reshape(dataShape)
     
     return data
+
 
 def rawwrite(fname, data):
     with open(fname, 'wb') as fout:
