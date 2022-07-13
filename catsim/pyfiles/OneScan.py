@@ -61,7 +61,10 @@ def one_scan(cfg):
         # save cfg.thisView to file
         cfg = feval(cfg.physics.outputCallback, cfg, viewId)
         
-        if cfg.sim.viewCount>10 and (viewId+1)%round(cfg.sim.viewCount/10)==0:
+        if cfg.sim.viewCount > 100:
+            if (viewId+1)%round(cfg.sim.viewCount/100)==0:
+                print("Simulated view %d/%d, time: %.1f s" % (viewId+1, cfg.sim.viewCount, time.time()-cfg.sim.timer))
+        elif cfg.sim.viewCount > 10 and (viewId+1)%round(cfg.sim.viewCount/10)==0:
             print("Simulated view %d/%d, time: %.1f s" % (viewId+1, cfg.sim.viewCount, time.time()-cfg.sim.timer))
     print("Scan sim time: %.1f s" % (time.time()-cfg.sim.timer))
     
