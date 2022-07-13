@@ -19,8 +19,15 @@ def prep_view(cfg):
     ###--------- log
     if cfg.protocol.airViewCount==1:
         airscan = nm.repmat(airscan, cfg.protocol.viewCount, 1)
+    else:
+        airscan = np.mean(airscan, axis=0, keepdims=True)
     if cfg.protocol.offsetViewCount==1:
         offsetScan = nm.repmat(offsetScan, cfg.protocol.viewCount, 1)
+    else:
+        offsetScan = np.mean(offsetScan, axis=0, keepdims=True)
+    airscan = airscan.astype(np.float32)
+    offsetScan = offsetScan.astype(np.float32)
+    phantomScan = phantomScan.astype(np.float32)
     prep = (phantomScan-offsetScan)/(airscan-offsetScan)
     smallValue = 1e-12
     prep[prep<smallValue] = smallValue
