@@ -302,7 +302,7 @@ void DD3ProjView_roi_notrans_mm(float x0,
 	/*
 	* For all rows
 	*/
-#pragma omp parallel for
+#pragma omp parallel for num_threads(8)
 	for (int rownr=0 ; rownr <nrrows ; rownr++)
 	{
 		float* pImg = pOrig + rownr * num_trans_plane_step;
