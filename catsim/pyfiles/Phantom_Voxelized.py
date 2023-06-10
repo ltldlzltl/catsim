@@ -6,8 +6,6 @@ from catsim.pyfiles.GetMu import GetMu
 from catsim.pyfiles.CommonTools import *
 
 def Phantom_Voxelized(cfg):
-    if cfg.phantom.keep:
-        return cfg
     ###----------- phantom file (vp file is json format)
     cfg.phantom.filename = my_path.find('phantom', cfg.phantom.filename, '')
     filepath, vpFilename = os.path.split(cfg.phantom.filename)
